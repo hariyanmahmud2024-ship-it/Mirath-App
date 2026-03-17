@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>মিরাস ক্যালকুলেটর</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { min-height:100vh; background:linear-gradient(135deg,#0a1628 0%,#1a2d4a 50%,#0d2137 100%); font-family:'Hind Siliguri',sans-serif; color:#e8dfc8; padding-bottom:60px; }
+.header { background:linear-gradient(180deg,rgba(212,175,55,0.15) 0%,transparent 100%); border-bottom:1px solid rgba(212,175,55,0.2); padding:10px 20px 8px; text-align:center; }
+.bismillah { font-size:13px; color:#d4af37; margin-bottom:2px; }
+.app-title { font-size:18px; font-weight:700; color:#d4af37; margin-bottom:1px; }
+.app-sub { font-size:11px; color:rgba(232,223,200,0.6); }
+.steps { display:flex; justify-content:center; gap:4px; padding:10px 10px 0; }
+.step-item { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; cursor:pointer; }
+.step-circle { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; transition:all 0.3s; }
+.step-circle.active { background:#d4af37; border:2px solid #d4af37; color:#0a1628; }
+.step-circle.done { background:rgba(212,175,55,0.3); border:2px solid rgba(212,175,55,0.5); color:#d4af37; }
+.step-circle.pending { background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.4); }
+.step-label { font-size:10px; }
+.step-label.active { color:#d4af37; }
+.step-label.other { color:rgba(255,255,255,0.4); }
+.container { max-width:480px; margin:0 auto; padding:16px 14px; }
+.section-title { font-size:17px; font-weight:600; color:#d4af37; margin-bottom:3px; }
+.section-sub { font-size:12px; color:rgba(232,223,200,0.6); margin-bottom:16px; }
+.card { background:rgba(255,255,255,0.05); border:1px solid rgba(212,175,55,0.15); border-radius:12px; padding:14px 16px; margin-bottom:10px; }
+.asset-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.asset-card { background:rgba(255,255,255,0.05); border:1px solid rgba(212,175,55,0.15); border-radius:10px; padding:10px 12px; }
+.asset-card.filled { background:rgba(212,175,55,0.1); border-color:rgba(212,175,55,0.35); }
+.asset-top { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.asset-name { font-size:12px; color:rgba(232,223,200,0.85); font-weight:500; line-height:1.3; }
+.asset-hint { font-size:10px; color:rgba(232,223,200,0.35); margin-top:4px; line-height:1.4; }
+.asset-input-row { display:flex; align-items:center; gap:4px; }
+.asset-input-row span { font-size:12px; color:#d4af37; }
+.asset-input-row input { flex:1; background:rgba(255,255,255,0.08); border:1px solid rgba(212,175,55,0.2); border-radius:6px; padding:6px 8px; color:#e8dfc8; font-size:13px; outline:none; font-family:'Hind Siliguri',sans-serif; width:100%; }
+.card-row { display:flex; align-items:center; gap:12px; }
+.card-icon { font-size:24px; }
+input[type=number] { flex:1; background:rgba(255,255,255,0.08); border:1px solid rgba(212,175,55,0.2); border-radius:8px; padding:8px 12px; color:#e8dfc8; font-size:15px; outline:none; font-family:'Hind Siliguri',sans-serif; }
+input[type=number]:focus { border-color:rgba(212,175,55,0.5); }
+.total-box { background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.3); border-radius:12px; padding:14px; margin-top:14px; text-align:center; }
+.total-label { font-size:12px; color:rgba(232,223,200,0.7); }
+.total-amount { font-size:26px; font-weight:700; color:#d4af37; }
+.btn { width:100%; padding:14px; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; font-family:'Hind Siliguri',sans-serif; transition:all 0.2s; }
+.btn-primary { background:linear-gradient(135deg,#d4af37,#b8962e); color:#0a1628; margin-top:16px; }
+.btn-primary:disabled { background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.3); cursor:not-allowed; }
+.btn-secondary { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#e8dfc8; }
+.btn-gold { background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.3); color:#d4af37; }
+.btn-green { background:rgba(37,211,102,0.15); border:1px solid rgba(37,211,102,0.3); color:#25d366; }
+.btn-row { display:flex; gap:8px; margin-top:16px; }
+.btn-row .btn { margin-top:0; }
+.category-label { font-size:11px; font-weight:600; color:#d4af37; letter-spacing:1px; margin-bottom:8px; margin-top:16px; opacity:0.8; text-transform:uppercase; }
+.heir-row { display:flex; align-items:center; gap:10px; }
+.heir-name { flex:1; font-size:13px; color:#e8dfc8; }
+.counter { display:flex; align-items:center; gap:8px; }
+.counter-btn { width:28px; height:28px; border-radius:50%; border:none; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:'Hind Siliguri',sans-serif; }
+.counter-btn.minus { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#e8dfc8; }
+.counter-btn.plus { background:rgba(212,175,55,0.2); border:1px solid rgba(212,175,55,0.4); color:#d4af37; }
+.counter-val { min-width:28px; text-align:center; font-size:15px; font-weight:700; }
+.counter-val.active { color:#d4af37; }
+.counter-val.zero { color:rgba(255,255,255,0.3); }
+.deduct-summary { background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.25); border-radius:12px; padding:14px; margin-top:8px; }
+.deduct-row { display:flex; justify-content:space-between; margin-bottom:8px; font-size:13px; }
+.deduct-row.total { border-top:1px solid rgba(212,175,55,0.2); padding-top:8px; margin-bottom:0; }
+.deduct-row.total span:first-child { font-size:14px; font-weight:600; color:#d4af37; }
+.deduct-row.total span:last-child { font-size:17px; font-weight:700; color:#d4af37; }
+.result-header { text-align:center; margin-bottom:20px; }
+.result-net-label { font-size:13px; color:#d4af37; margin-bottom:6px; }
+.result-net-amount { font-size:30px; font-weight:700; color:#d4af37; }
+.result-card { background:rgba(255,255,255,0.05); border:1px solid rgba(212,175,55,0.2); border-radius:12px; padding:14px; margin-bottom:10px; }
+.result-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.result-name { font-size:13px; font-weight:600; color:#e8dfc8; }
+.result-count { font-size:11px; color:rgba(232,223,200,0.6); }
+.result-note { font-size:11px; color:rgba(212,175,55,0.7); margin-top:2px; }
+.result-amount { font-size:17px; font-weight:700; color:#d4af37; text-align:right; }
+.result-pct { font-size:11px; color:rgba(232,223,200,0.6); text-align:right; }
+.progress-bar { height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin-bottom:6px; }
+.progress-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,#d4af37,#b8962e); }
+.per-person { font-size:11px; color:rgba(232,223,200,0.6); margin-top:4px; }
+.fraction-label { font-size:11px; color:rgba(212,175,55,0.7); margin-top:2px; }
+.explanation { font-size:11px; color:rgba(232,223,200,0.55); margin-top:6px; line-height:1.6; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); }
+.warning-box { background:rgba(255,165,0,0.1); border:1px solid rgba(255,165,0,0.3); border-radius:12px; padding:12px; margin-bottom:10px; }
+.disclaimer { background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.2); border-radius:12px; padding:12px; margin:14px 0 16px; font-size:11px; color:rgba(232,223,200,0.5); line-height:1.7; }
+.dua { text-align:center; margin-top:24px; font-size:13px; color:rgba(212,175,55,0.5); }
+.active-count-box { background:rgba(212,175,55,0.1); border-radius:10px; padding:10px 14px; margin-bottom:14px; text-align:center; font-size:13px; color:#d4af37; }
+.hidden { display:none; }
+.red { color:#e05555; }
+canvas { display:block; margin:0 auto; }
+.pie-section { background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.15); border-radius:12px; padding:16px; margin-bottom:16px; text-align:center; }
+.pie-legend { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:12px; }
+.pie-legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:rgba(232,223,200,0.8); }
+.pie-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.land-section { background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:12px; padding:14px; margin-bottom:16px; }
+.land-title { font-size:14px; font-weight:600; color:#d4af37; margin-bottom:10px; }
+.land-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.land-input-wrap { display:flex; flex-direction:column; gap:4px; }
+.land-label { font-size:11px; color:rgba(232,223,200,0.6); }
+.land-result { background:rgba(212,175,55,0.1); border-radius:8px; padding:10px; text-align:center; font-size:13px; color:#d4af37; font-weight:600; }
+select { background:rgba(255,255,255,0.08); border:1px solid rgba(212,175,55,0.2); border-radius:8px; padding:8px 10px; color:#e8dfc8; font-size:13px; outline:none; font-family:'Hind Siliguri',sans-serif; width:100%; }
+.tabs { display:flex; gap:6px; margin-bottom:16px; }
+.tab { flex:1; padding:8px; text-align:center; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid rgba(212,175,55,0.2); color:rgba(232,223,200,0.6); background:rgba(255,255,255,0.04); transition:all 0.2s; }
+.tab.active { background:rgba(212,175,55,0.15); border-color:rgba(212,175,55,0.4); color:#d4af37; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+  <div class="app-title">মিরাস ক্যালকুলেটর</div>
+  <div class="app-sub">ইসলামিক উত্তরাধিকার হিসাব · হাম্বলী ফিকহ</div>
+</div>
+
+<div class="steps">
+  <div class="step-item" onclick="goToStep(1)"><div class="step-circle active" id="sc1">১</div><div class="step-label active" id="sl1">সম্পদ</div></div>
+  <div class="step-item"><div class="step-circle pending" id="sc2">২</div><div class="step-label other" id="sl2">কর্তন</div></div>
+  <div class="step-item"><div class="step-circle pending" id="sc3">৩</div><div class="step-label other" id="sl3">ওয়ারিশ</div></div>
+  <div class="step-item"><div class="step-circle pending" id="sc4">৪</div><div class="step-label other" id="sl4">ফলাফল</div></div>
+  <div class="step-item"><div class="step-circle pending" id="sc5">৫</div><div class="step-label other" id="sl5">জমি</div></div>
+</div>
+
+<div class="container">
+
+<!-- STEP 1 -->
+<div id="step1">
+  <div class="section-title">মোট সম্পদের পরিমাণ</div>
+  <div class="section-sub">মৃত ব্যক্তির সকল সম্পদ যোগ করুন</div>
+  <div class="asset-grid" id="assetCards"></div>
+  <div class="total-box" id="totalBox" style="display:none">
+    <div class="total-label">মোট সম্পদ</div>
+    <div class="total-amount" id="totalAssetsDisplay">৳০</div>
+  </div>
+  <button class="btn btn-primary" id="nextBtn1" onclick="goToStep(2)" disabled>পরবর্তী →</button>
+</div>
+
+<!-- STEP 2 -->
+<div id="step2" class="hidden">
+  <div class="section-title">কর্তনযোগ্য খরচ</div>
+  <div class="section-sub">বণ্টনের আগে এই তিনটি বাদ দিতে হবে</div>
+  <div class="card">
+    <div class="card-row" style="margin-bottom:10px">
+      <span class="card-icon">🕌</span>
+      <div><div style="font-size:14px;font-weight:600;color:#e8dfc8">দাফন-কাফনের খরচ</div><div style="font-size:11px;color:rgba(232,223,200,0.5)">জানাজা, কবর ও অন্যান্য</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="color:#d4af37">৳</span><input type="number" id="d_funeral" placeholder="0" oninput="updateDeductions()"></div>
+  </div>
+  <div class="card">
+    <div class="card-row" style="margin-bottom:10px">
+      <span class="card-icon">📝</span>
+      <div><div style="font-size:14px;font-weight:600;color:#e8dfc8">ঋণ পরিশোধ</div><div style="font-size:11px;color:rgba(232,223,200,0.5)">মৃতের সকল দেনা</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="color:#d4af37">৳</span><input type="number" id="d_debt" placeholder="0" oninput="updateDeductions()"></div>
+  </div>
+  <div class="card">
+    <div class="card-row" style="margin-bottom:10px">
+      <span class="card-icon">📜</span>
+      <div><div style="font-size:14px;font-weight:600;color:#e8dfc8">অসিয়ত</div><div style="font-size:11px;color:rgba(232,223,200,0.5)">সর্বোচ্চ মোট সম্পদের ১/৩</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><span style="color:#d4af37">৳</span><input type="number" id="d_wasiyyah" placeholder="0" oninput="updateDeductions()"></div>
+  </div>
+  <div class="deduct-summary">
+    <div class="deduct-row"><span style="color:rgba(232,223,200,0.7)">মোট সম্পদ</span><span id="s2_total">৳০</span></div>
+    <div class="deduct-row"><span style="color:rgba(232,223,200,0.7)">মোট কর্তন</span><span class="red" id="s2_deduct">− ৳০</span></div>
+    <div class="deduct-row total"><span>বণ্টনযোগ্য সম্পদ</span><span id="s2_net">৳০</span></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goToStep(1)">← পূর্ববর্তী</button>
+    <button class="btn btn-primary" style="margin-top:0;flex:2" onclick="goToStep(3)">পরবর্তী →</button>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div id="step3" class="hidden">
+  <div class="section-title">ওয়ারিশদের তথ্য</div>
+  <div class="section-sub">জীবিত ওয়ারিশদের সংখ্যা লিখুন</div>
+  <div id="heirCards"></div>
+  <div class="active-count-box hidden" id="activeCountBox"><span id="activeCountText"></span></div>
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goToStep(2)">← পূর্ববর্তী</button>
+    <button class="btn btn-primary" id="calcBtn" style="margin-top:0;flex:2" onclick="goToStep(4)" disabled>হিসাব করুন →</button>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div id="step4" class="hidden">
+  <div id="resultContent"></div>
+  <div class="btn-row" style="flex-wrap:wrap;gap:8px">
+    <button class="btn btn-secondary" onclick="goToStep(3)" style="flex:1;min-width:120px">← সম্পাদনা</button>
+    <button class="btn btn-gold" onclick="resetAll()" style="flex:1;min-width:120px">🔄 নতুন হিসাব</button>
+    <button class="btn btn-green" onclick="shareWhatsApp()" style="flex:1;min-width:120px">📲 WhatsApp</button>
+    <button class="btn btn-gold" onclick="downloadPDF()" style="flex:1;min-width:120px">📄 PDF</button>
+  </div>
+  <div style="margin-top:12px">
+    <button class="btn btn-secondary" onclick="goToStep(5)">🏡 জমির মাপ ক্যালকুলেটর →</button>
+  </div>
+  <div class="dua">رَبَّنَا تَقَبَّلْ مِنَّا</div>
+</div>
+
+<!-- STEP 5: Land Calculator -->
+<div id="step5" class="hidden">
+  <div class="section-title">🏡 জমির মাপ ক্যালকুলেটর</div>
+  <div class="section-sub">বিঘা/কাঠা/শতক থেকে টাকার মূল্য বের করুন</div>
+
+  <div class="land-section">
+    <div class="land-title">পরিমাণ লিখুন</div>
+    <div class="land-grid">
+      <div class="land-input-wrap">
+        <div class="land-label">বিঘা</div>
+        <input type="number" id="l_bigha" placeholder="0" oninput="calcLand()">
+      </div>
+      <div class="land-input-wrap">
+        <div class="land-label">কাঠা</div>
+        <input type="number" id="l_katha" placeholder="0" oninput="calcLand()">
+      </div>
+      <div class="land-input-wrap">
+        <div class="land-label">শতক / ডেসিমেল</div>
+        <input type="number" id="l_shotok" placeholder="0" oninput="calcLand()">
+      </div>
+      <div class="land-input-wrap">
+        <div class="land-label">বর্গফুট</div>
+        <input type="number" id="l_sqft" placeholder="0" oninput="calcLand()">
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px">
+      <div class="land-label" style="margin-bottom:6px">প্রতি শতকের দাম (৳)</div>
+      <input type="number" id="l_price" placeholder="যেমন: ৫০০০০" oninput="calcLand()">
+    </div>
+
+    <div class="land-result" id="landResult">পরিমাণ ও দাম দিলে ফলাফল দেখাবে</div>
+  </div>
+
+  <div class="land-section">
+    <div class="land-title">📐 মাপ রূপান্তর</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:rgba(232,223,200,0.7);line-height:2">
+      <div>১ বিঘা = ৩৩ শতক</div>
+      <div>১ কাঠা = ১.৬৫ শতক</div>
+      <div>১ শতক = ৪৩৫.৬ বর্গফুট</div>
+      <div>১ বিঘা = ২০ কাঠা</div>
+      <div>১ একর = ১০০ শতক</div>
+      <div>১ বিঘা = ১৪৩৫০ বর্গফুট</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="goToStep(4)">← ফলাফলে ফিরুন</button>
+    <button class="btn btn-primary" style="margin-top:0;flex:2" onclick="useLandValue()">এই মূল্য সম্পদে যোগ করুন ↑</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+const ASSETS = [
+  { id:"cash", label:"নগদ টাকা", icon:"💵", hint:"হাতে থাকা নগদ" },
+  { id:"land", label:"জমি", icon:"🏞️", hint:"বর্তমান বাজার মূল্য" },
+  { id:"house", label:"বাড়ি / ফ্ল্যাট", icon:"🏠", hint:"বর্তমান বাজার মূল্য" },
+  { id:"gold", label:"সোনা / গহনা", icon:"💍", hint:"বর্তমান বাজার মূল্য" },
+  { id:"business", label:"ব্যবসা / দোকান", icon:"🏪", hint:"আনুমানিক মোট মূল্য" },
+  { id:"vehicle", label:"গাড়ি / যানবাহন", icon:"🚗", hint:"বর্তমান বাজার মূল্য" },
+  { id:"bank", label:"ব্যাংক আমানত", icon:"🏦", hint:"মোট জমা টাকা" },
+  { id:"livestock", label:"গবাদি পশু", icon:"🐄", hint:"বর্তমান বাজার মূল্য" },
+  { id:"crops", label:"ফসল / কৃষি", icon:"🌾", hint:"আনুমানিক মূল্য" },
+  { id:"other", label:"অন্যান্য", icon:"📦", hint:"যেকোনো সম্পদ" },
+];
+
+const HEIRS = [
+  { id:"husband", label:"স্বামী", icon:"👨", cat:"বিবাহ", max:1 },
+  { id:"wife", label:"স্ত্রী", icon:"👩", cat:"বিবাহ", max:4 },
+  { id:"son", label:"ছেলে", icon:"👦", cat:"সন্তান" },
+  { id:"daughter", label:"মেয়ে", icon:"👧", cat:"সন্তান" },
+  { id:"father", label:"বাবা", icon:"👴", cat:"পিতামাতা", max:1 },
+  { id:"mother", label:"মা", icon:"👵", cat:"পিতামাতা", max:1 },
+  { id:"grandfather", label:"দাদা", icon:"👴", cat:"দাদা-দাদি / নানা-নানি", max:1 },
+  { id:"grandmother_paternal", label:"দাদি", icon:"👵", cat:"দাদা-দাদি / নানা-নানি", max:1 },
+  { id:"grandmother_maternal", label:"নানি", icon:"👵", cat:"দাদা-দাদি / নানা-নানি", max:1 },
+  { id:"son_of_son", label:"পুত্রের পুত্র (নাতি)", icon:"👦", cat:"নাতি-নাতনি" },
+  { id:"daughter_of_son", label:"পুত্রের কন্যা (নাতনি)", icon:"👧", cat:"নাতি-নাতনি" },
+  { id:"full_brother", label:"সহোদর ভাই", icon:"👨", cat:"ভাই-বোন" },
+  { id:"full_sister", label:"সহোদর বোন", icon:"👩", cat:"ভাই-বোন" },
+  { id:"paternal_brother", label:"বৈমাত্রেয় ভাই", icon:"👨", cat:"ভাই-বোন" },
+  { id:"paternal_sister", label:"বৈমাত্রেয় বোন", icon:"👩", cat:"ভাই-বোন" },
+  { id:"maternal_brother", label:"বৈপিত্রেয় ভাই", icon:"👨", cat:"ভাই-বোন" },
+  { id:"maternal_sister", label:"বৈপিত্রেয় বোন", icon:"👩", cat:"ভাই-বোন" },
+  { id:"paternal_uncle", label:"চাচা (সহোদর)", icon:"👨", cat:"চাচা-ফুফু" },
+  { id:"paternal_uncle_half", label:"চাচা (বৈমাত্রেয়)", icon:"👨", cat:"চাচা-ফুফু" },
+  { id:"son_of_full_brother", label:"ভাতিজা (সহোদর ভাইয়ের ছেলে)", icon:"👦", cat:"ভাতিজা" },
+  { id:"son_of_paternal_brother", label:"ভাতিজা (বৈমাত্রেয় ভাইয়ের ছেলে)", icon:"👦", cat:"ভাতিজা" },
+];
+
+const EXPLANATIONS = {
+  husband: "স্বামী সন্তান থাকলে ১/৪, না থাকলে ১/২ পান।",
+  wife: "স্ত্রী/স্ত্রীরা মিলে সন্তান থাকলে ১/৮, না থাকলে ১/৪ পান।",
+  son: "ছেলে আসাবাহ হিসেবে অবশিষ্ট সম্পদ পায়। মেয়ে থাকলে ছেলে দ্বিগুণ পায়।",
+  daughter: "ছেলে না থাকলে — একজন মেয়ে ১/২, একাধিক হলে ২/৩ মিলে পান। ছেলে থাকলে আসাবাহতে অংশ পান।",
+  father: "বাবা সন্তান থাকলে ১/৬ পান এবং ছেলে না থাকলে অবশিষ্টও পান।",
+  mother: "মা সন্তান বা দুই+ ভাই-বোন থাকলে ১/৬, অন্যথায় ১/৩ পান।",
+  grandfather: "দাদা বাবার অনুপস্থিতিতে বাবার মতো পান।",
+  grandmother_paternal: "দাদি মা না থাকলে ১/৬ পান (নানির সাথে ভাগ করে)।",
+  grandmother_maternal: "নানি মা না থাকলে ১/৬ পান (দাদির সাথে ভাগ করে)।",
+  son_of_son: "পুত্রের পুত্র সরাসরি ছেলে না থাকলে ছেলের মতো পায়।",
+  daughter_of_son: "পুত্রের কন্যা নির্দিষ্ট শর্তে অংশ পায়।",
+  full_brother: "সহোদর ভাই বাবা/ছেলে না থাকলে আসাবাহ হিসেবে পায়।",
+  full_sister: "সহোদর বোন নির্দিষ্ট শর্তে অংশ পায়।",
+  paternal_brother: "বৈমাত্রেয় ভাই সহোদর ভাই না থাকলে পায়।",
+  paternal_uncle: "চাচা ভাই/ভাতিজা না থাকলে আসাবাহ হিসেবে পায়।",
+  son_of_full_brother: "ভাতিজা চাচার আগে আসাবাহ হিসেবে পায়।",
+  maternal_brother: "বৈপিত্রেয় ভাই সন্তান/বাবা না থাকলে ১/৬ পায়।",
+  maternal_sister: "বৈপিত্রেয় বোন সন্তান/বাবা না থাকলে ১/৬ পায়।",
+};
+
+const PIE_COLORS = ["#d4af37","#4CAF50","#2196F3","#E91E63","#FF9800","#9C27B0","#00BCD4","#F44336","#8BC34A","#FF5722","#607D8B","#795548"];
+
+let assets={}, deductions={funeral:0,debt:0,wasiyyah:0}, heirCounts={};
+let currentStep=1, lastResult=null;
+
+// Build asset cards
+const assetCardsEl = document.getElementById("assetCards");
+ASSETS.forEach(a => {
+  assetCardsEl.innerHTML += `
+  <div class="asset-card" id="acard_${a.id}">
+    <div class="asset-top">
+      <span style="font-size:18px">${a.icon}</span>
+      <span class="asset-name">${a.label}</span>
+    </div>
+    <div class="asset-input-row">
+      <span>৳</span>
+      <input type="number" id="a_${a.id}" placeholder="0" oninput="updateAssets()">
+    </div>
+    <div class="asset-hint">${a.hint}</div>
+  </div>`;
+});
+
+// Build heir cards
+const heirCardsEl = document.getElementById("heirCards");
+let lastCat="";
+HEIRS.forEach(h => {
+  if(h.cat!==lastCat){ heirCardsEl.innerHTML+=`<div class="category-label">${h.cat}</div>`; lastCat=h.cat; }
+  heirCardsEl.innerHTML+=`
+  <div class="card" id="hcard_${h.id}" style="margin-bottom:8px;padding:10px 14px">
+    <div class="heir-row">
+      <span style="font-size:18px">${h.icon}</span>
+      <span class="heir-name">${h.label}</span>
+      <div class="counter">
+        <button class="counter-btn minus" onclick="changeHeir('${h.id}',-1)">−</button>
+        <span class="counter-val zero" id="hval_${h.id}">0</span>
+        <button class="counter-btn plus" onclick="changeHeir('${h.id}',1)">+</button>
+      </div>
+    </div>
+  </div>`;
+});
+
+function formatBDT(n){ return "৳"+Math.round(n).toLocaleString("en-US"); }
+
+function fractionLabel(f){
+  if(Math.abs(f-1/6)<0.001)return"১/৬";
+  if(Math.abs(f-1/4)<0.001)return"১/৪";
+  if(Math.abs(f-1/3)<0.001)return"১/৩";
+  if(Math.abs(f-1/2)<0.001)return"১/২";
+  if(Math.abs(f-2/3)<0.001)return"২/৩";
+  if(Math.abs(f-1/8)<0.001)return"১/৮";
+  return(f*100).toFixed(1)+"%";
+}
+
+function totalAssets(){ return Object.values(assets).reduce((s,v)=>s+(parseFloat(v)||0),0); }
+function totalDeductions(){ return Object.values(deductions).reduce((s,v)=>s+(parseFloat(v)||0),0); }
+function netEstate(){ return Math.max(0,totalAssets()-totalDeductions()); }
+
+function updateAssets(){
+  ASSETS.forEach(a=>{
+    assets[a.id]=parseFloat(document.getElementById("a_"+a.id).value)||0;
+    const card=document.getElementById("acard_"+a.id);
+    if(assets[a.id]>0) card.classList.add("filled"); else card.classList.remove("filled");
+  });
+  const total=totalAssets();
+  const tb=document.getElementById("totalBox");
+  if(total>0){ tb.style.display="block"; document.getElementById("totalAssetsDisplay").textContent=formatBDT(total); }
+  else tb.style.display="none";
+  document.getElementById("nextBtn1").disabled=total===0;
+}
+
+function updateDeductions(){
+  deductions.funeral=parseFloat(document.getElementById("d_funeral").value)||0;
+  deductions.debt=parseFloat(document.getElementById("d_debt").value)||0;
+  deductions.wasiyyah=parseFloat(document.getElementById("d_wasiyyah").value)||0;
+  document.getElementById("s2_total").textContent=formatBDT(totalAssets());
+  document.getElementById("s2_deduct").textContent="− "+formatBDT(totalDeductions());
+  document.getElementById("s2_net").textContent=formatBDT(netEstate());
+}
+
+function changeHeir(id,delta){
+  const heir=HEIRS.find(h=>h.id===id);
+  const max=heir.max||99;
+  heirCounts[id]=Math.max(0,Math.min(max,(heirCounts[id]||0)+delta));
+  const val=heirCounts[id];
+  const el=document.getElementById("hval_"+id);
+  el.textContent=val;
+  el.className="counter-val "+(val>0?"active":"zero");
+  const card=document.getElementById("hcard_"+id);
+  card.style.background=val>0?"rgba(212,175,55,0.12)":"rgba(255,255,255,0.05)";
+  card.style.borderColor=val>0?"rgba(212,175,55,0.4)":"rgba(212,175,55,0.15)";
+  const activeCount=Object.values(heirCounts).filter(v=>v>0).length;
+  const box=document.getElementById("activeCountBox");
+  if(activeCount>0){ box.classList.remove("hidden"); document.getElementById("activeCountText").textContent=activeCount+" ধরনের ওয়ারিশ নির্বাচিত"; }
+  else box.classList.add("hidden");
+  document.getElementById("calcBtn").disabled=activeCount===0;
+}
+
+function calculate(){
+  const net=netEstate();
+  const h=heirCounts;
+  const hasSon=(h.son||0)>0, hasDaughter=(h.daughter||0)>0;
+  const hasFather=(h.father||0)>0, hasMother=(h.mother||0)>0;
+  const hasHusband=(h.husband||0)>0, hasWife=(h.wife||0)>0;
+  const hasGF=(h.grandfather||0)>0;
+  const hasGmP=(h.grandmother_paternal||0)>0, hasGmM=(h.grandmother_maternal||0)>0;
+  const hasSoS=(h.son_of_son||0)>0, hasDoS=(h.daughter_of_son||0)>0;
+  const hasFB=(h.full_brother||0)>0, hasFS=(h.full_sister||0)>0;
+  const hasPB=(h.paternal_brother||0)>0, hasPS=(h.paternal_sister||0)>0;
+  const hasMBro=(h.maternal_brother||0)>0, hasMSis=(h.maternal_sister||0)>0;
+  const hasPU=(h.paternal_uncle||0)>0, hasPUH=(h.paternal_uncle_half||0)>0;
+  const hasSFB=(h.son_of_full_brother||0)>0, hasSPB=(h.son_of_paternal_brother||0)>0;
+  const hasChildren=hasSon||hasDaughter||hasSoS||hasDoS;
+
+  const shares={};
+  let remaining=net;
+
+  if(hasHusband){ const f=hasChildren?1/4:1/2; shares.husband={frac:f,amount:net*f,count:1}; remaining-=net*f; }
+  if(hasWife){ const tf=hasChildren?1/8:1/4; shares.wife={frac:tf,amount:net*tf,count:h.wife,perPerson:net*tf/h.wife}; remaining-=net*tf; }
+
+  if(hasMother){
+    const sibC=(h.full_brother||0)+(h.full_sister||0)+(h.paternal_brother||0)+(h.paternal_sister||0)+(h.maternal_brother||0)+(h.maternal_sister||0);
+    const f=(!hasChildren&&sibC<2)?1/3:1/6;
+    shares.mother={frac:f,amount:net*f,count:1}; remaining-=net*f;
+  }
+
+  if(hasFather){
+    if(hasChildren){ shares.father={frac:1/6,amount:net/6,count:1,note:"১/৬ নির্ধারিত"}; remaining-=net/6;
+      if(!hasSon&&!hasSoS){ shares.father.amount+=remaining; shares.father.frac=shares.father.amount/net; shares.father.note="১/৬ + আসাবাহ"; remaining=0; }
+    } else { shares.father={residuary:true,count:1}; }
+  }
+
+  if(hasDaughter&&!hasSon){ const f=h.daughter===1?1/2:2/3; shares.daughter={frac:f,amount:net*f,count:h.daughter,perPerson:net*f/h.daughter}; remaining-=net*f; }
+  if(hasSon){ shares.son={residuary:true,count:h.son,withDaughter:hasDaughter,dc:h.daughter||0}; if(hasDaughter) shares.daughter={residuary:true,count:h.daughter,withSon:true}; }
+
+  if(hasGF&&!hasFather){
+    if(hasChildren){ shares.grandfather={frac:1/6,amount:net/6,count:1,note:"১/৬ নির্ধারিত"}; remaining-=net/6;
+      if(!hasSon&&!hasSoS){ shares.grandfather.amount+=remaining; shares.grandfather.frac=shares.grandfather.amount/net; shares.grandfather.note="১/৬ + আসাবাহ"; remaining=0; }
+    } else { shares.grandfather={residuary:true,count:1}; }
+  }
+
+  if(!hasMother){ const gc=(hasGmP?1:0)+(hasGmM?1:0); if(gc>0){ const pg=net/6/gc;
+    if(hasGmP) shares.grandmother_paternal={frac:1/6/gc,amount:pg,count:1};
+    if(hasGmM) shares.grandmother_maternal={frac:1/6/gc,amount:pg,count:1};
+    remaining-=net/6; }
+  }
+
+  if(hasSoS&&!hasSon){ shares.son_of_son={residuary:true,count:h.son_of_son,withDoS:hasDoS,dc:h.daughter_of_son||0}; if(hasDoS) shares.daughter_of_son={residuary:true,count:h.daughter_of_son}; }
+  else if(hasDoS&&!hasSon&&!hasDaughter){ const f=h.daughter_of_son===1?1/2:2/3; shares.daughter_of_son={frac:f,amount:net*f,count:h.daughter_of_son,perPerson:net*f/h.daughter_of_son}; remaining-=net*f; }
+
+  const hasAsc=hasFather||hasMother||hasGF;
+  if(!hasAsc&&!hasChildren){ const mc=(h.maternal_brother||0)+(h.maternal_sister||0);
+    if(mc>0){ const tf=mc===1?1/6:1/3; const pm=net*tf/mc;
+      if(hasMBro) shares.maternal_brother={frac:tf*(h.maternal_brother/mc),amount:pm*h.maternal_brother,count:h.maternal_brother,perPerson:pm};
+      if(hasMSis) shares.maternal_sister={frac:tf*(h.maternal_sister/mc),amount:pm*h.maternal_sister,count:h.maternal_sister,perPerson:pm};
+      remaining-=net*tf; }
+  }
+
+  // Resolve asabah
+  if(shares.father&&shares.father.residuary){ shares.father={frac:remaining/net,amount:remaining,count:1,note:"আসাবাহ (অবশিষ্ট)"}; remaining=0; }
+  else if(shares.grandfather&&shares.grandfather.residuary){ shares.grandfather={frac:remaining/net,amount:remaining,count:1,note:"আসাবাহ (অবশিষ্ট)"}; remaining=0; }
+  else if(shares.son&&shares.son.residuary){ const s=h.son,d=shares.son.withDaughter?h.daughter:0; const u=s*2+d; const pu=remaining/u;
+    shares.son={frac:pu*2*s/net,amount:pu*2*s,count:s,perPerson:pu*2};
+    if(d>0) shares.daughter={frac:pu*d/net,amount:pu*d,count:d,perPerson:pu}; remaining=0; }
+  else if(shares.son_of_son&&shares.son_of_son.residuary){ const s=h.son_of_son,d=shares.son_of_son.withDoS?h.daughter_of_son:0; const u=s*2+d; const pu=remaining/u;
+    shares.son_of_son={frac:pu*2*s/net,amount:pu*2*s,count:s,perPerson:pu*2};
+    if(d>0) shares.daughter_of_son={frac:pu*d/net,amount:pu*d,count:d,perPerson:pu}; remaining=0; }
+  else if(!hasAsc&&!hasChildren&&remaining>0){
+    const fb=h.full_brother||0,fs=h.full_sister||0;
+    if(fb+fs>0){ const u=fb*2+fs; const pu=remaining/u;
+      if(fb>0) shares.full_brother={frac:pu*2*fb/net,amount:pu*2*fb,count:fb,perPerson:pu*2};
+      if(fs>0) shares.full_sister={frac:pu*fs/net,amount:pu*fs,count:fs,perPerson:pu}; remaining=0; }
+    else if(hasPB||hasPS){ const pb=h.paternal_brother||0,ps=h.paternal_sister||0; const u=pb*2+ps; const pu=remaining/u;
+      if(pb>0) shares.paternal_brother={frac:pu*2*pb/net,amount:pu*2*pb,count:pb,perPerson:pu*2};
+      if(ps>0) shares.paternal_sister={frac:pu*ps/net,amount:pu*ps,count:ps,perPerson:pu}; remaining=0; }
+    else if(hasSFB){ const n=h.son_of_full_brother||0; if(n>0){ shares.son_of_full_brother={frac:remaining/net,amount:remaining,count:n,perPerson:remaining/n,note:"আসাবাহ"}; remaining=0; } }
+    else if(hasPU){ const n=h.paternal_uncle||0; if(n>0){ shares.paternal_uncle={frac:remaining/net,amount:remaining,count:n,perPerson:remaining/n,note:"আসাবাহ"}; remaining=0; } }
+    else if(hasPUH){ const n=h.paternal_uncle_half||0; if(n>0){ shares.paternal_uncle_half={frac:remaining/net,amount:remaining,count:n,perPerson:remaining/n,note:"আসাবাহ"}; remaining=0; } }
+  }
+
+  return{net,shares,remaining:remaining>1?remaining:0};
+}
+
+function drawPieChart(shares, net){
+  const canvas=document.getElementById("pieChart");
+  if(!canvas)return;
+  const ctx=canvas.getContext("2d");
+  const size=Math.min(220,window.innerWidth-80);
+  canvas.width=size; canvas.height=size;
+  const cx=size/2,cy=size/2,r=size/2-8;
+  let startAngle=-Math.PI/2;
+  const entries=Object.entries(shares).filter(([,s])=>s.amount&&s.amount>1);
+  entries.forEach(([id,s],i)=>{
+    const slice=(s.amount/net)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,startAngle,startAngle+slice);
+    ctx.closePath(); ctx.fillStyle=PIE_COLORS[i%PIE_COLORS.length]; ctx.fill();
+    ctx.strokeStyle="rgba(10,22,40,0.8)"; ctx.lineWidth=2; ctx.stroke();
+    startAngle+=slice;
+  });
+  // legend
+  const legendEl=document.getElementById("pieLegend");
+  legendEl.innerHTML="";
+  entries.forEach(([id,s],i)=>{
+    const hInfo=HEIRS.find(h=>h.id===id);
+    const pct=((s.amount/net)*100).toFixed(1);
+    legendEl.innerHTML+=`<div class="pie-legend-item"><div class="pie-dot" style="background:${PIE_COLORS[i%PIE_COLORS.length]}"></div><span>${hInfo?hInfo.label:id} ${pct}%</span></div>`;
+  });
+}
+
+function renderResult(){
+  const res=calculate();
+  lastResult=res;
+  const net=res.net;
+  let html=`<div class="result-header"><div class="result-net-label">মোট বণ্টনযোগ্য সম্পদ</div><div class="result-net-amount">${formatBDT(net)}</div></div>`;
+
+  // Pie chart
+  html+=`<div class="pie-section">
+    <div style="font-size:13px;color:#d4af37;margin-bottom:10px;font-weight:600">📊 ভাগের চিত্র</div>
+    <canvas id="pieChart"></canvas>
+    <div class="pie-legend" id="pieLegend"></div>
+  </div>`;
+
+  // Deductions
+  const td=totalDeductions();
+  if(td>0){
+    html+=`<div class="card" style="margin-bottom:14px"><div style="font-size:12px;color:#d4af37;margin-bottom:8px;font-weight:600">কর্তনের বিবরণ</div>`;
+    if(deductions.funeral>0) html+=`<div class="deduct-row"><span style="color:rgba(232,223,200,0.7)">🕌 দাফন-কাফন</span><span>− ${formatBDT(deductions.funeral)}</span></div>`;
+    if(deductions.debt>0) html+=`<div class="deduct-row"><span style="color:rgba(232,223,200,0.7)">📝 ঋণ</span><span>− ${formatBDT(deductions.debt)}</span></div>`;
+    if(deductions.wasiyyah>0) html+=`<div class="deduct-row"><span style="color:rgba(232,223,200,0.7)">📜 অসিয়ত</span><span>− ${formatBDT(deductions.wasiyyah)}</span></div>`;
+    html+=`</div>`;
+  }
+
+  html+=`<h3 style="font-size:15px;font-weight:600;color:#d4af37;margin-bottom:12px">ওয়ারিশভিত্তিক বণ্টন</h3>`;
+
+  Object.entries(res.shares).forEach(([id,s])=>{
+    if(!s.amount||s.amount<1)return;
+    const hInfo=HEIRS.find(h=>h.id===id); if(!hInfo)return;
+    const pct=((s.amount/net)*100).toFixed(1);
+    const exp=EXPLANATIONS[id]||"";
+    html+=`<div class="result-card">
+      <div class="result-top">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-size:18px">${hInfo.icon}</span>
+          <div>
+            <div class="result-name">${hInfo.label}${s.count>1?` <span class="result-count">× ${s.count}</span>`:""}</div>
+            ${s.note?`<div class="result-note">${s.note}</div>`:""}
+          </div>
+        </div>
+        <div><div class="result-amount">${formatBDT(s.amount)}</div><div class="result-pct">${pct}%</div></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,pct)}%"></div></div>
+      ${s.count>1&&s.perPerson?`<div class="per-person">প্রতিজন পাবেন: ${formatBDT(s.perPerson)}</div>`:""}
+      ${s.frac?`<div class="fraction-label">কুরআনিক অংশ: ${fractionLabel(s.frac)}</div>`:""}
+      ${exp?`<div class="explanation">💡 ${exp}</div>`:""}
+    </div>`;
+  });
+
+  if(res.remaining>0) html+=`<div class="warning-box"><div style="font-size:13px;color:#ffa500">⚠️ অবশিষ্ট: ${formatBDT(res.remaining)}</div><div style="font-size:11px;color:rgba(255,165,0,0.7);margin-top:3px">বায়তুল মাল বা নিকটতম আত্মীয়কে দেওয়া যাবে</div></div>`;
+  html+=`<div class="disclaimer">⚠️ এই হিসাব শুধুমাত্র তথ্যের জন্য। চূড়ান্ত ফয়সালার জন্য যোগ্য আলেম বা ইসলামিক বিশেষজ্ঞের পরামর্শ নিন।</div>`;
+
+  document.getElementById("resultContent").innerHTML=html;
+  setTimeout(()=>drawPieChart(res.shares,net),100);
+}
+
+function shareWhatsApp(){
+  if(!lastResult)return;
+  let msg="*মিরাস হিসাব*\n\n";
+  msg+=`মোট সম্পদ: ${formatBDT(totalAssets())}\n`;
+  if(totalDeductions()>0) msg+=`কর্তন: ${formatBDT(totalDeductions())}\n`;
+  msg+=`বণ্টনযোগ্য: ${formatBDT(lastResult.net)}\n\n*ওয়ারিশ অনুযায়ী ভাগ:*\n`;
+  Object.entries(lastResult.shares).forEach(([id,s])=>{
+    if(!s.amount||s.amount<1)return;
+    const hInfo=HEIRS.find(h=>h.id===id); if(!hInfo)return;
+    const pct=((s.amount/lastResult.net)*100).toFixed(1);
+    msg+=`• ${hInfo.label}${s.count>1?" × "+s.count:""}: ${formatBDT(s.amount)} (${pct}%)\n`;
+    if(s.count>1&&s.perPerson) msg+=`  প্রতিজন: ${formatBDT(s.perPerson)}\n`;
+  });
+  msg+="\n_মিরাস ক্যালকুলেটর দ্বারা হিসাবকৃত_";
+  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+}
+
+function downloadPDF(){
+  if(!lastResult){ alert("আগে হিসাব করুন"); return; }
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+    doc.setFont("helvetica");
+    doc.setFontSize(16); doc.setTextColor(212,175,55);
+    doc.text("Mirath Calculator - Islamic Inheritance", 20, 20);
+    doc.setFontSize(11); doc.setTextColor(100,100,100);
+    doc.text("Hanbali Fiqh | Calculated by Mirath App", 20, 28);
+    doc.setDrawColor(212,175,55); doc.line(20,32,190,32);
+
+    let y=42;
+    doc.setFontSize(12); doc.setTextColor(50,50,50);
+    doc.text("Total Estate: "+formatBDT(totalAssets()), 20, y); y+=8;
+    if(totalDeductions()>0){ doc.text("Deductions: - "+formatBDT(totalDeductions()), 20, y); y+=8; }
+    doc.setTextColor(180,140,0);
+    doc.text("Net Distributable: "+formatBDT(lastResult.net), 20, y); y+=12;
+
+    doc.setTextColor(50,50,50); doc.setFontSize(13);
+    doc.text("Distribution:", 20, y); y+=8;
+    doc.line(20,y,190,y); y+=6;
+
+    doc.setFontSize(11);
+    Object.entries(lastResult.shares).forEach(([id,s])=>{
+      if(!s.amount||s.amount<1)return;
+      const hInfo=HEIRS.find(h=>h.id===id); if(!hInfo)return;
+      const pct=((s.amount/lastResult.net)*100).toFixed(1);
+      const label=hInfo.label+(s.count>1?" x"+s.count:"");
+      doc.setTextColor(50,50,50);
+      doc.text(label+": "+formatBDT(s.amount)+" ("+pct+"%)", 25, y);
+      if(s.count>1&&s.perPerson){ y+=5; doc.setTextColor(120,120,120); doc.text("Per person: "+formatBDT(s.perPerson), 35, y); }
+      y+=7;
+      if(y>270){ doc.addPage(); y=20; }
+    });
+
+    y+=5; doc.setFontSize(9); doc.setTextColor(150,150,150);
+    doc.text("* For information only. Consult a qualified Islamic scholar for final rulings.", 20, y);
+    doc.save("mirath-hisab.pdf");
+  } catch(e){
+    // Fallback: print
+    window.print();
+  }
+}
+
+// Land calculator
+function calcLand(){
+  const bigha=parseFloat(document.getElementById("l_bigha").value)||0;
+  const katha=parseFloat(document.getElementById("l_katha").value)||0;
+  const shotok=parseFloat(document.getElementById("l_shotok").value)||0;
+  const sqft=parseFloat(document.getElementById("l_sqft").value)||0;
+  const pricePerShotok=parseFloat(document.getElementById("l_price").value)||0;
+
+  // Convert everything to shotok
+  const totalShotok = bigha*33 + katha*1.65 + shotok + sqft/435.6;
+  const totalSqft = totalShotok * 435.6;
+  const totalBigha = totalShotok / 33;
+
+  const el=document.getElementById("landResult");
+  if(totalShotok<=0){ el.textContent="পরিমাণ ও দাম দিলে ফলাফল দেখাবে"; return; }
+
+  let result=`মোট: ${totalShotok.toFixed(2)} শতক = ${totalBigha.toFixed(2)} বিঘা = ${Math.round(totalSqft).toLocaleString()} বর্গফুট`;
+  if(pricePerShotok>0){
+    const totalValue=totalShotok*pricePerShotok;
+    result+=`\n\nমোট মূল্য: ${formatBDT(totalValue)}`;
+    document.getElementById("landResult").dataset.value=totalValue;
+  }
+  el.textContent=result;
+  el.style.whiteSpace="pre-line";
+}
+
+function useLandValue(){
+  const el=document.getElementById("landResult");
+  const val=el.dataset.value;
+  if(!val){ alert("আগে পরিমাণ ও দাম দিন"); return; }
+  document.getElementById("a_land").value=Math.round(parseFloat(val));
+  updateAssets();
+  goToStep(1);
+  alert("জমির মূল্য সম্পদে যোগ হয়েছে! এখন Step 1 এ দেখতে পাবেন।");
+}
+
+function goToStep(n){
+  if(n===4) renderResult();
+  currentStep=n;
+  [1,2,3,4,5].forEach(i=>{
+    document.getElementById("step"+i).className=i===n?"":"hidden";
+    const circle=document.getElementById("sc"+i);
+    const label=document.getElementById("sl"+i);
+    if(i===n){ circle.className="step-circle active"; circle.textContent=i; label.className="step-label active"; }
+    else if(i<n){ circle.className="step-circle done"; circle.textContent="✓"; label.className="step-label other"; }
+    else{ circle.className="step-circle pending"; circle.textContent=i; label.className="step-label other"; }
+  });
+  window.scrollTo(0,0);
+}
+
+function resetAll(){
+  assets={}; deductions={funeral:0,debt:0,wasiyyah:0}; heirCounts={}; lastResult=null;
+  ASSETS.forEach(a=>{ document.getElementById("a_"+a.id).value=""; });
+  ["funeral","debt","wasiyyah"].forEach(k=>{ document.getElementById("d_"+k).value=""; });
+  HEIRS.forEach(h=>{
+    document.getElementById("hval_"+h.id).textContent="0";
+    document.getElementById("hval_"+h.id).className="counter-val zero";
+    const card=document.getElementById("hcard_"+h.id);
+    card.style.background="rgba(255,255,255,0.05)"; card.style.borderColor="rgba(212,175,55,0.15)";
+  });
+  document.getElementById("activeCountBox").classList.add("hidden");
+  document.getElementById("totalBox").style.display="none";
+  document.getElementById("nextBtn1").disabled=true;
+  document.getElementById("calcBtn").disabled=true;
+  goToStep(1);
+}
+</script>
+</body>
+</html>
